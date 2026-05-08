@@ -4,6 +4,7 @@ import { removeBackground } from '@imgly/background-removal'
 export default function Home(){
   const [image,setImage]=useState(null)
   const [result,setResult]=useState(null)
+  const [gallery,setGallery]=useState([])
   const [loading,setLoading]=useState(false)
   const [progress,setProgress]=useState(0)
   const [status,setStatus]=useState('')
@@ -79,6 +80,11 @@ export default function Home(){
 
     const data = canvas.toDataURL('image/png')
     setResult(data)
+
+    setGallery(prev=>{
+      const updated=[data,...prev]
+      return updated.slice(0,5)
+    })
   }
 
   function drawOutline(ctx){
@@ -169,6 +175,22 @@ export default function Home(){
           <img src={result} style={{maxWidth:300}}/>
           <br/>
           <a href={result} download="sticker.png">Download Sticker</a>
+        </div>
+      )}
+
+      {gallery.length>0 && (
+        <div style={{marginTop:40}}>
+          <h3>Recent Stickers</h3>
+          <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+            {gallery.map((img,i)=> (
+              <img
+                key={i}
+                src={img}
+                style={{width:90,height:90,objectFit:'contain',border:'1px solid #ddd',borderRadius:8,padding:4,cursor:'pointer'}}
+                onClick={()=>setResult(img)}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>
