@@ -174,7 +174,7 @@ export default function Home(){
             />
           </div>
         </div>
-      )
+      )}
 
       {image && (
         <div style={{marginTop:20}}>
