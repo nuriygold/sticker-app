@@ -10,6 +10,8 @@
     "next": "14.2.3",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "@imgly/background-removal": "1.5.5"
+    "@imgly/background-removal": "1.5.5",
+    "@tensorflow/tfjs": "^4.20.0",
+    "@tensorflow-models/coco-ssd": "^2.2.3"
   }
 }

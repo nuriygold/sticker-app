@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react'
 import { removeBackground } from '@imgly/background-removal'
+import * as tf from '@tensorflow/tfjs'
+import * as cocoSsd from '@tensorflow-models/coco-ssd'
 
 export default function Home(){
   const [image,setImage]=useState(null)
@@ -12,8 +14,15 @@ export default function Home(){
   const [contrast,setContrast]=useState(100)
   const [cartoon,setCartoon]=useState(false)
   const canvasRef = useRef(null)
+  const [model,setModel]=useState(null)
 
   async function handleFile(e){
+
+    if(!model){
+      setStatus('Loading AI model')
+      const m = await cocoSsd.load()
+      setModel(m)
+    }
     const file=e.target.files[0]
     if(!file) return
 
@@ -29,16 +38,33 @@ export default function Home(){
     const blob=await removeBackground(file)
     const url=URL.createObjectURL(blob)
 
-    setProgress(60)
-    setStatus('Preparing sticker')
+    setProgress(55)
+    setStatus('Detecting main subject')
 
     const img = new Image()
-    img.onload = () => {
-      setProgress(85)
-      setStatus('Rendering outline')
-      drawImage(img)
+
+    img.onload = async () => {
+
+      let crop = {x:0,y:0,w:img.width,h:img.height}
+
+      if(model){
+        const predictions = await model.detect(img)
+
+        if(predictions && predictions.length>0){
+          const best = predictions.sort((a,b)=>b.score-a.score)[0]
+          const [x,y,w,h] = best.bbox
+          crop = {x,y,w,h}
+        }
+      }
+
+      setProgress(75)
+      setStatus('Rendering sticker')
+
+      drawImage(img,crop)
+
       setProgress(100)
       setStatus('Sticker ready')
+
       setTimeout(()=>{
         setLoading(false)
         setProgress(0)
@@ -51,7 +77,7 @@ export default function Home(){
     setImage(url)
   }
 
-  function drawImage(img){
+  function drawImage(img,crop=null){
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
 
@@ -63,9 +89,14 @@ export default function Home(){
 
     ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
 
-    const scale = Math.min(size/img.width,size/img.height)
-    const w = img.width*scale
-    const h = img.height*scale
+    const srcW = crop ? crop.w : img.width
+    const srcH = crop ? crop.h : img.height
+    const srcX = crop ? crop.x : 0
+    const srcY = crop ? crop.y : 0
+
+    const scale = Math.min(size/srcW,size/srcH)
+    const w = srcW*scale
+    const h = srcH*scale
 
     const x = (size-w)/2
     const y = (size-h)/2
@@ -74,7 +105,7 @@ export default function Home(){
       ctx.filter += ' saturate(160%)'
     }
 
-    ctx.drawImage(img,x,y,w,h)
+    ctx.drawImage(img,srcX,srcY,srcW,srcH,x,y,w,h)
 
     drawOutline(ctx)
 
