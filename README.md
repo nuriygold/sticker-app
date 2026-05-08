@@ -1,3 +1,5 @@
+# sticker-app
+
 Sticker App (Solo)
 
 Upload a screenshot or photo → auto remove background → export sticker PNG.
